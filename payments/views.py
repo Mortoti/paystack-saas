@@ -10,6 +10,7 @@ from django.utils.decorators import method_decorator
 from django.conf import settings
 from .models import Transaction
 from datetime import datetime
+from decouple import config
 
 
 class InitializePaymentView(APIView):
