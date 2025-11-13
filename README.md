@@ -1,22 +1,8 @@
 # 💳 Paystack SaaS API
 
-> **A white-label payment API that lets your clients accept payments through Paystack without managing API keys directly.**
+> A white-label payment API that lets your clients accept payments through Paystack without managing API keys directly.
 
 Your clients get API keys from you. They make payment requests to your API. You handle all Paystack integration behind the scenes.
-
----
-
-## 🎯 What This Does
-
-This is a **SaaS payment middleware** that:
-
-✅ Generates and manages API keys for your clients  
-✅ Handles Paystack payment initialization and verification  
-✅ Receives and processes Paystack webhooks automatically  
-✅ Stores all transaction history in your database  
-✅ Provides a clean REST API for your clients  
-
-**Your clients never need their own Paystack account** — they just use the API keys you provide them.
 
 ---
 
@@ -38,10 +24,6 @@ Client's App → Your API (with your API key) → Paystack → Webhooks back to 
 
 ## ⚡ Quick Start
 
-### Prerequisites
-- Python 3.8+
-- Paystack account ([Sign up here](https://dashboard.paystack.com/))
-
 ### 1. Clone the Repository
 
 ```bash
@@ -49,439 +31,111 @@ git clone https://github.com/Mortoti/paystack-saas.git
 cd paystack-saas
 ```
 
-### 2. Create Virtual Environment
+### 2. Set Up Virtual Environment
 
 ```bash
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-### 3. Install Dependencies
-
-```bash
 pip install -r requirements.txt
 ```
 
-### 4. Configure Environment Variables
+### 3. Configure Environment
 
-Create a `.env` file in the project root:
+Create `.env` file:
 
 ```env
-SECRET_KEY=your-django-secret-key-here
+SECRET_KEY=your-django-secret-key
 PAYSTACK_SECRET_KEY=your-paystack-secret-key
 DEBUG=True
 ```
 
-**Get your Paystack secret key:**
-1. Go to [Paystack Dashboard](https://dashboard.paystack.com/)
-2. Settings → API Keys & Webhooks
-3. Copy your **Secret Key** (starts with `sk_`)
+Get Paystack key: [Dashboard](https://dashboard.paystack.com/) → Settings → API Keys
 
-### 5. Run Migrations
+### 4. Set Up Database
 
 ```bash
 python manage.py migrate
-```
-
-### 6. Create Admin Account
-
-```bash
 python manage.py createsuperuser
-```
-
-### 7. Start Development Server
-
-```bash
 python manage.py runserver
 ```
 
-Your API is now running at `http://127.0.0.1:8000/` 🚀
+API running at `http://127.0.0.1:8000/` 🚀
 
 ---
 
-## 🔑 Generate API Keys for Clients
+## 🔑 Generate API Keys
 
-### Via Admin Panel
+Go to `http://127.0.0.1:8000/admin/` → **API Keys** → **Add API Key**
 
-1. Go to `http://127.0.0.1:8000/admin/`
-2. Log in with your superuser credentials
-3. Click **API Keys** → **Add API Key**
-4. Select user and give it a name
-5. Save — the API key is auto-generated (starts with `pk_`)
-
-### Via Django Shell (Programmatic)
-
-```python
-python manage.py shell
-
-from django.contrib.auth.models import User
-from api_keys.models import APIKey
-
-user = User.objects.get(username='client_username')
-api_key = APIKey.objects.create(
-    user=user,
-    name="Production Key"
-)
-print(f"Generated API Key: {api_key.key}")
-```
+The key auto-generates (starts with `pk_`). Give this to your clients.
 
 ---
 
 ## 📡 API Endpoints
 
-### Base URL (Development)
-```
-http://127.0.0.1:8000/api/payments/
-```
+All requests require: `X-API-Key: pk_your_key` header
 
-### Authentication
-All endpoints require an API key in the request header:
-
+### Initialize Payment
 ```http
-X-API-Key: pk_your_api_key_here
-```
+POST /api/payments/initialize/
+Content-Type: application/json
+X-API-Key: pk_your_key
 
----
-
-### 1. Initialize Payment
-
-**Endpoint:** `POST /api/payments/initialize/`
-
-**Request:**
-```json
 {
   "email": "customer@example.com",
-  "amount": 5000,
-  "reference": "optional-unique-reference",
-  "callback_url": "https://yoursite.com/payment/callback"
+  "amount": 5000
 }
 ```
 
-**Response:**
-```json
-{
-  "status": true,
-  "message": "Authorization URL created",
-  "data": {
-    "authorization_url": "https://checkout.paystack.com/xxxxxxxxx",
-    "access_code": "xxxxxxxxx",
-    "reference": "k4b23875ao"
-  }
-}
+### Verify Payment
+```http
+GET /api/payments/verify/{reference}/
+X-API-Key: pk_your_key
 ```
 
-**Example (JavaScript):**
-```javascript
-const response = await fetch('http://your-api.com/api/payments/initialize/', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'X-API-Key': 'pk_your_api_key_here'
-  },
-  body: JSON.stringify({
-    email: 'customer@example.com',
-    amount: 5000
-  })
-});
-
-const data = await response.json();
-// Redirect customer to data.data.authorization_url
+### List Transactions
+```http
+GET /api/payments/transactions/
+X-API-Key: pk_your_key
 ```
 
----
 
-### 2. Verify Payment
-
-**Endpoint:** `GET /api/payments/verify/<reference>/`
-
-**Response:**
-```json
-{
-  "status": true,
-  "message": "Verification successful",
-  "data": {
-    "id": 5517191487,
-    "status": "success",
-    "reference": "k4b23875ao",
-    "amount": 39900,
-    "paid_at": "2025-11-09T15:20:16.000Z",
-    "customer": {
-      "email": "customer@example.com"
-    }
-  }
-}
-```
-
-**Example (JavaScript):**
-```javascript
-const response = await fetch('http://your-api.com/api/payments/verify/k4b23875ao/', {
-  headers: {
-    'X-API-Key': 'pk_your_api_key_here'
-  }
-});
-
-const data = await response.json();
-if (data.data.status === 'success') {
-  // Payment successful - fulfill order
-}
-```
 
 ---
 
-### 3. List Transactions
+## 🚀 Deployment
 
-**Endpoint:** `GET /api/payments/transactions/?page=1&per_page=50`
-
-**Response:**
-```json
-{
-  "status": true,
-  "message": "Transactions retrieved",
-  "data": [...],
-  "meta": {
-    "total": 6,
-    "total_volume": 689218,
-    "page": 1,
-    "pageCount": 1
-  }
-}
-```
-
----
-
-### 4. Webhook Endpoint
-
-**Endpoint:** `POST /api/payments/webhook/`
-
-⚠️ **This endpoint is for Paystack only** — your clients don't call this.
-
-Configure in Paystack Dashboard:
-- Go to Settings → Webhooks
-- Add: `https://your-domain.com/api/payments/webhook/`
-
-Webhook events are automatically:
-- Verified with signature
-- Stored in database
-- Accessible via admin panel
-
----
-
-## 🔒 Security Features
-
-✅ **API Key Authentication** — Custom authentication per client  
-✅ **Webhook Signature Verification** — Ensures webhooks are from Paystack  
-✅ **CORS Configured** — Controlled cross-origin access  
-✅ **Environment Variables** — Secrets never in code  
-✅ **HTTPS Ready** — Production deployment uses SSL  
-
----
-
-## 🗄️ Database Models
-
-### APIKey
-Stores client API keys with usage tracking:
-- `key` — Auto-generated (pk_...)
-- `user` — Associated Django user
-- `name` — Identifier for the key
-- `is_active` — Enable/disable key
-- `last_used` — Track usage
-
-### Transaction
-Stores all payment records from webhooks:
-- `reference` — Unique transaction ID
-- `email` — Customer email
-- `amount` — Payment amount
-- `status` — success/failed/abandoned
-- `paid_at` — Timestamp
-- `metadata` — Additional data from Paystack
-
----
-
-## 🚀 Deployment Guide
-
-### Option 1: Heroku (Easiest)
-
+### Heroku
 ```bash
-# Install Heroku CLI
-# Login
-heroku login
-
-# Create app
 heroku create your-app-name
-
-# Set environment variables
-heroku config:set SECRET_KEY=your-secret-key
-heroku config:set PAYSTACK_SECRET_KEY=your-paystack-key
+heroku config:set PAYSTACK_SECRET_KEY=your_key
+heroku config:set SECRET_KEY=your_secret
 heroku config:set DEBUG=False
-
-# Deploy
 git push heroku main
-
-# Run migrations
 heroku run python manage.py migrate
-
-# Create superuser
-heroku run python manage.py createsuperuser
 ```
 
-Your API will be live at: `https://your-app-name.herokuapp.com/`
+### Railway
+1. Push to GitHub
+2. Connect repo on [Railway.app](https://railway.app)
+3. Add environment variables
+4. Deploy automatically
 
-### Option 2: Railway.app
-
-1. Push code to GitHub
-2. Go to [Railway.app](https://railway.app/)
-3. Click "New Project" → "Deploy from GitHub"
-4. Select your repository
-5. Add environment variables in Settings
-6. Railway automatically deploys!
-
-### Option 3: DigitalOcean/AWS/Azure
-
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed server setup instructions.
-
----
-
-## 📋 Post-Deployment Checklist
-
-After deploying to production:
-
-- [ ] Update `ALLOWED_HOSTS` in settings.py with your domain
-- [ ] Set `DEBUG=False` in production
-- [ ] Configure Paystack webhook URL to your domain
-- [ ] Set up SSL certificate (Let's Encrypt)
-- [ ] Test API endpoints with production URL
-- [ ] Generate API keys for clients
-- [ ] Set up monitoring (optional but recommended)
-- [ ] Configure database backups
-
----
-
-## 🧪 Testing the API
-
-### Using the Test Interface
-
-A test HTML page is included at `test_api.html`:
-
-1. Open `test_api.html` in your browser
-2. Enter your API key
-3. Test all endpoints (initialize, verify, list)
-
-### Using cURL
-
-**Initialize Payment:**
-```bash
-curl -X POST http://127.0.0.1:8000/api/payments/initialize/ \
-  -H "Content-Type: application/json" \
-  -H "X-API-Key: pk_your_api_key" \
-  -d '{"email": "test@example.com", "amount": 5000}'
-```
-
-**Verify Payment:**
-```bash
-curl http://127.0.0.1:8000/api/payments/verify/reference123/ \
-  -H "X-API-Key: pk_your_api_key"
-```
-
----
-
-## 🛠️ Tech Stack
-
-- **Backend:** Django 5.2.8 + Django REST Framework
-- **Database:** SQLite (dev) / PostgreSQL (production recommended)
-- **Payment Gateway:** Paystack
-- **Authentication:** Custom API Key authentication
-- **Language:** Python 3.13
-
----
-
-## 📁 Project Structure
-
-```
-paystack-saas/
-├── api_keys/              # API key management app
-│   ├── models.py         # APIKey model
-│   ├── authentication.py # Custom authentication
-│   └── admin.py          # Admin interface
-├── payments/             # Payment processing app
-│   ├── models.py         # Transaction model
-│   ├── views.py          # API endpoints
-│   ├── urls.py           # URL routing
-│   ├── paystack.py       # Paystack service
-│   └── admin.py          # Admin interface
-├── paystack_saas/        # Main project config
-│   ├── settings.py       # Django settings
-│   └── urls.py           # Root URL config
-├── test_api.html         # Testing interface
-├── .env                  # Environment variables (create this)
-├── .gitignore           # Git ignore file
-├── requirements.txt      # Python dependencies
-└── manage.py            # Django management
-```
-
----
-
-## 🐛 Troubleshooting
-
-### "Invalid API key" error
-- Check the API key is correctly formatted (starts with `pk_`)
-- Verify the key is active in admin panel
-- Ensure header name is exactly `X-API-Key`
-
-### Webhook not receiving events
-- Verify webhook URL in Paystack dashboard
-- Check URL is publicly accessible (not localhost)
-- Ensure webhook endpoint doesn't require API key authentication
-- Check Django logs for errors
-
-### CORS errors in browser
-- Verify `corsheaders` is installed
-- Check `CORS_ALLOW_ALL_ORIGINS = True` in settings (dev only)
-- For production, configure `CORS_ALLOWED_ORIGINS`
-
-### Database errors
-- Run `python manage.py migrate` to apply migrations
-- Check database file permissions (SQLite)
-- Verify database credentials (PostgreSQL/MySQL)
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please:
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature-name`
-3. Commit changes: `git commit -m 'Add feature'`
-4. Push to branch: `git push origin feature-name`
-5. Open a Pull Request
-
----
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+### Configure Webhook
+After deployment, add webhook URL in Paystack dashboard:
+`https://your-domain.com/api/payments/webhook/`
 
 ---
 
 ## 📧 Support
 
-- **Issues:** [GitHub Issues](https://github.com/Mortoti/paystack-saas/issues)
 - **Email:** mortoti.dev@gmail.com
 
 
 ---
 
-## ⭐ Show Your Support
-
-If this project helps you, please give it a star ⭐ on GitHub!
-
----
-
 <div align="center">
 
-**Built with ❤️ by [Mortoti Jephthah](https://github.com/Mortoti)**
-
-[![GitHub stars](https://img.shields.io/github/stars/Mortoti/paystack-saas?style=social)](https://github.com/Mortoti/paystack-saas)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+**Built by [Mortoti Jephthah](https://github.com/Mortoti)**
 
 </div>
