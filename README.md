@@ -1,141 +1,74 @@
 # 💳 Paystack SaaS API
 
-> A white-label payment API that lets your clients accept payments through Paystack without managing API keys directly.
+White-label payment API for Paystack. Generate API keys for your clients, they process payments through your API, you handle everything with Paystack.
 
-Your clients get API keys from you. They make payment requests to your API. You handle all Paystack integration behind the scenes.
-
----
-
-## 🏗️ Architecture
-
-```
-Client's App → Your API (with your API key) → Paystack → Webhooks back to your API
-```
-
-**Example Flow:**
-1. Your client "S" gets API key `pk_abc123...` from your admin panel
-2. S's website calls your API: `POST /api/payments/initialize/` with her API key
-3. Your API talks to Paystack using YOUR Paystack credentials
-4. Customer completes payment on Paystack
-5. Paystack sends webhook to your API
-6. Your API stores transaction and notifies S
+**Live:** [paystack-saas.onrender.com](https://paystack-saas.onrender.com/)
 
 ---
 
-## ⚡ Quick Start
+## Features
 
-### 1. Clone the Repository
+- 🔐 API key authentication for clients
+- 💰 Multi-currency payments (default: GHS)
+- 📊 Transaction tracking dashboard
+- 🔔 Paystack webhook integration
+- 📚 Interactive API documentation
 
+---
+
+## Quick Start
+
+**1. Install**
 ```bash
 git clone https://github.com/Mortoti/paystack-saas.git
 cd paystack-saas
-```
-
-### 2. Set Up Virtual Environment
-
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 3. Configure Environment
-
-Create `.env` file:
-
+**2. Configure `.env`**
 ```env
 SECRET_KEY=your-django-secret-key
-PAYSTACK_SECRET_KEY=your-paystack-secret-key
+PAYSTACK_SECRET_KEY=sk_test_xxxxx
 DEBUG=True
 ```
 
-Get Paystack key: [Dashboard](https://dashboard.paystack.com/) → Settings → API Keys
-
-### 4. Set Up Database
-
+**3. Run**
 ```bash
 python manage.py migrate
 python manage.py createsuperuser
 python manage.py runserver
 ```
 
-API running at `http://127.0.0.1:8000/` 🚀
+Visit `http://127.0.0.1:8000/` for docs
 
 ---
 
-## 🔑 Generate API Keys
+## Usage
 
-Go to `http://127.0.0.1:8000/admin/` → **API Keys** → **Add API Key**
+**Generate client API keys:** Admin Panel → API Keys → Add
 
-The key auto-generates (starts with `pk_`). Give this to your clients.
-
----
-
-## 📡 API Endpoints
-
-All requests require: `X-API-Key: pk_your_key` header
-
-### Initialize Payment
-```http
-POST /api/payments/initialize/
-Content-Type: application/json
-X-API-Key: pk_your_key
-
-{
-  "email": "customer@example.com",
-  "amount": 5000
-}
-```
-
-### Verify Payment
-```http
-GET /api/payments/verify/{reference}/
-X-API-Key: pk_your_key
-```
-
-### List Transactions
-```http
-GET /api/payments/transactions/
-X-API-Key: pk_your_key
-```
-
-
-
----
-
-## 🚀 Deployment
-
-### Heroku
+**Initialize payment:**
 ```bash
-heroku create your-app-name
-heroku config:set PAYSTACK_SECRET_KEY=your_key
-heroku config:set SECRET_KEY=your_secret
-heroku config:set DEBUG=False
-git push heroku main
-heroku run python manage.py migrate
+curl -X POST https://paystack-saas.onrender.com/api/payments/initialize/ \
+  -H "X-API-Key: pk_xxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "customer@example.com", "amount": 50000}'
 ```
 
-### Railway
-1. Push to GitHub
-2. Connect repo on [Railway.app](https://railway.app)
-3. Add environment variables
-4. Deploy automatically
+**Verify payment:**
+```bash
+curl https://paystack-saas.onrender.com/api/payments/verify/{reference}/ \
+  -H "X-API-Key: pk_xxxxx"
+```
 
-### Configure Webhook
-After deployment, add webhook URL in Paystack dashboard:
-`https://your-domain.com/api/payments/webhook/`
+Full API docs: [paystack-saas.onrender.com](https://paystack-saas.onrender.com/)
 
 ---
 
-## 📧 Support
+## Tech Stack
 
-- **Email:** mortoti.dev@gmail.com
-
+Django • Django REST Framework • PostgreSQL • Paystack • Render
 
 ---
 
-<div align="center">
-
-**Built by [Mortoti Jephthah](https://github.com/Mortoti)**
-
-</div>
+**Built by [Mortoti Jephthah](https://github.com/Mortoti)** • mortoti.dev@gmail.com
