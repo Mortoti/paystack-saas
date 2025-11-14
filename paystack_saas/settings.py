@@ -117,7 +117,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 if DEBUG:
     CORS_ALLOW_ALL_ORIGINS = True
 else:
-    CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='').split(',')
+    cors_origins = config('CORS_ALLOWED_ORIGINS', default='')
+    if cors_origins:
+        CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins.split(',') if origin.strip()]
+    else:
+        # Fallback: allow your Render domain
+        CORS_ALLOWED_ORIGINS = [
+            'https://paystack-saas.onrender.com',
+        ]
 
 CORS_ALLOW_HEADERS = [
     'accept',
