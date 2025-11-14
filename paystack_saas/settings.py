@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     # Personal
     'corsheaders',
     'rest_framework',
+    'drf_yasg',
     'api_keys',
     'payments',
 ]
