@@ -5,7 +5,7 @@ import secrets
 
 class APIKey(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='api_keys')
-    key = models.CharField(max_length=64, unique=True, editable=False)
+    key = models.CharField(max_length=128, unique=True, editable=False)
     name = models.CharField(max_length=100, help_text="A name to identify this API key")
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
