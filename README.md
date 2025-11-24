@@ -2,7 +2,7 @@
 
 White-label payment API for Paystack. Generate API keys for your clients, they process payments through your API, you handle everything with Paystack.
 
-**Live:** [paystack-saas.onrender.com](https://paystack-saas.onrender.com/)
+)
 
 ---
 
