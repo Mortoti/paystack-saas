@@ -61,7 +61,7 @@ curl https://paystack-saas.onrender.com/api/payments/verify/{reference}/ \
   -H "X-API-Key: pk_xxxxx"
 ```
 
-Full API docs: [paystack-saas.onrender.com](https://paystack-saas.onrender.com/)
+
 
 ---
 
